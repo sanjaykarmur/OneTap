@@ -1,9 +1,8 @@
 /* OneTap Counter — service worker
-   Caches the app shell so the counter works fully offline. The counter's
-   data itself lives in localStorage on the page, not here — this only
-   caches the files needed to load the app. */
+   Offline-first app with reliable updates. */
 
-const CACHE_NAME = "onetap-cache-v1";
+const CACHE_NAME = "onetap-cache-v7";
+
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -25,42 +24,71 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+    caches.keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim())
   );
 });
 
-// Cache-first for the app shell, falling back to network, so the app opens
-// instantly and works offline. Anything not in the shell just goes to
-// network (this app makes no other requests during normal use).
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
+  const request = event.request;
+
+  // Always try the network first for navigations and app files.
+  // This prevents an old deployed version from being stuck in cache.
+  const isAppFile =
+    request.mode === "navigate" ||
+    request.url.endsWith("/index.html") ||
+    request.url.endsWith("/style.css") ||
+    request.url.endsWith("/script.js") ||
+    request.url.endsWith("/manifest.json");
+
+  if (isAppFile) {
+    event.respondWith(
+      fetch(request)
         .then((response) => {
-          // Opportunistically cache same-origin successful responses.
-          if (response && response.ok && event.request.url.startsWith(self.location.origin)) {
+          if (response && response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            caches.open(CACHE_NAME)
+              .then((cache) => cache.put(request, clone))
+              .catch(() => {});
           }
           return response;
         })
-        .catch(() => {
-          // Offline and not cached — for navigations, fall back to the
-          // cached index so the app still opens.
-          if (event.request.mode === "navigate") {
-            return caches.match("./index.html");
-          }
-          return Response.error();
-        });
-    })
+        .catch(() => caches.match(request)
+          .then((cached) => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Other resources use cache first.
+  event.respondWith(
+    caches.match(request)
+      .then((cached) => {
+        if (cached) return cached;
+
+        return fetch(request)
+          .then((response) => {
+            if (
+              response &&
+              response.ok &&
+              request.url.startsWith(self.location.origin)
+            ) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone))
+                .catch(() => {});
+            }
+            return response;
+          })
+          .catch(() => Response.error());
+      })
   );
 });

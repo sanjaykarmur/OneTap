@@ -415,7 +415,8 @@
   function doReset() {
     count = 0n;
     renderCount();
-    persistCount();
+    setItem(K_COUNT, "0");
+    saveScheduled = false;
     els.countAnnounce.textContent = "Count reset to 0";
     if (els.hint) els.hint.style.visibility = "visible";
     closeConfirm();
@@ -465,25 +466,115 @@
 
   els.importBtn.addEventListener("click", () => els.importFile.click());
 
+  /* ---------- Backup import ---------- */
+  function readFileAsText(file) {
+    if (file && typeof file.text === "function") {
+      return file.text();
+    }
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("FileReader failed"));
+      reader.readAsText(file);
+    });
+  }
+
+  function normalizeBackupText(text) {
+    let value = String(text || "").replace(/^\uFEFF/, "").trim();
+    value = value.replace(/^```(?:json)?\s*/i, "");
+    value = value.replace(/\s*```$/i, "");
+    return value.trim();
+  }
+
+  function extractBackupCount(data, rawText) {
+    let value;
+
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const candidates = [
+        data.count,
+        data.data?.count,
+        data.counter?.count,
+        data.value,
+        data.currentCount
+      ];
+
+      value = candidates.find((candidate) => candidate !== undefined && candidate !== null);
+    }
+
+    if (value === undefined) {
+      const plain = String(rawText || "").trim();
+      if (/^[0-9][0-9,\s]*$/.test(plain)) {
+        value = plain;
+      }
+    }
+
+    if (value === undefined || value === null) {
+      throw new Error("No count field was found in this backup");
+    }
+
+    let countText = String(value).trim();
+
+    if (/^[0-9][0-9,\s]*$/.test(countText)) {
+      countText = countText.replace(/[\s,]/g, "");
+    }
+
+    if (!/^\d+$/.test(countText)) {
+      throw new Error(`Invalid count value: ${String(value).slice(0, 120)}`);
+    }
+
+    return countText;
+  }
+
+  async function importBackupFile(file) {
+    if (!file) {
+      throw new Error("No file was selected");
+    }
+
+    const text = await readFileAsText(file);
+    const cleanText = normalizeBackupText(text);
+
+    if (!cleanText) {
+      throw new Error("Backup file is empty");
+    }
+
+    let data;
+    try {
+      data = JSON.parse(cleanText);
+    } catch (error) {
+      throw new Error(`Invalid JSON: ${error?.message || String(error)}`);
+    }
+
+    const normalizedCount = extractBackupCount(data, cleanText);
+    const restored = BigInt(normalizedCount);
+
+    count = restored;
+    renderCount();
+    setItem(K_COUNT, count.toString());
+
+    if (els.countAnnounce) {
+      els.countAnnounce.textContent = formatCount(count);
+    }
+
+    if (els.hint) {
+      els.hint.style.visibility = count > 0n ? "hidden" : "visible";
+    }
+
+    return count;
+  }
+
   els.importFile.addEventListener("change", async () => {
     const file = els.importFile.files?.[0];
-    els.importFile.value = ""; // allow re-selecting the same file later
+    els.importFile.value = "";
+
     if (!file) return;
+
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      if (data == null || typeof data.count === "undefined") {
-        throw new Error("Missing count field");
-      }
-      const restored = BigInt(String(data.count).replace(/[^0-9-]/g, ""));
-      if (restored < 0n) throw new Error("Negative count");
-      count = restored;
-      renderCount();
-      persistCount();
-      if (els.hint) els.hint.style.visibility = count > 0n ? "hidden" : "visible";
+      await importBackupFile(file);
       showToast("Count restored from backup");
-    } catch (e) {
-      showToast("That file couldn't be read as a backup");
+    } catch (error) {
+      console.error("OneTap backup import failed:", error);
+      showToast("Invalid or unreadable backup file");
     }
   });
 
@@ -498,14 +589,22 @@
     });
 
     applyGlass(getItem(K_GLASS, "on"));
-    wireToggle(els.soundToggle, K_SOUND, "off");
-    wireToggle(els.hapticToggle, K_HAPTIC, "off");
     els.fullscreenToggle.setAttribute("aria-checked", "false");
     els.wakeLockToggle.setAttribute("aria-checked", String(getItem(K_WAKELOCK, "off") === "on"));
     if (getItem(K_WAKELOCK, "off") === "on") requestWakeLock();
 
     if (!storageOk) {
       showToast("Your browser is blocking saved data, so counts won't survive a restart");
+    }
+
+    // Debug mode deliberately removes old service workers/caches so stale JS cannot hide a fix.
+    if (DEBUG_MODE && "serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      }).catch(() => {});
+      if (window.caches) {
+        caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => {});
+      }
     }
 
     // Register service worker for offline support.

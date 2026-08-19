@@ -1,8 +1,9 @@
 {
+  "id": "./",
   "name": "OneTap Counter",
   "short_name": "OneTap",
   "description": "A simple, elegant tap counter that saves your count automatically.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
