@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>OneTap</title>
+<meta name="description" content="A simple, reliable tap counter that saves your count automatically." />
+
+<meta name="theme-color" content="#0F1A2B" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#EFF3F8" media="(prefers-color-scheme: light)" />
+
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="OneTap" />
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Skip link for keyboard/screen-reader users -->
+<a class="skip-link" href="#tapBtn">Skip to counter button</a>
+
+<div class="app" id="app">
+
+  <!-- Top bar: secondary controls only -->
+  <header class="topbar" role="toolbar" aria-label="App controls">
+    <button type="button" class="icon-btn" id="settingsBtn" aria-haspopup="dialog" aria-controls="settingsSheet" aria-label="Open settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Zm7.4-3.5c0-.6-.05-1.13-.14-1.66l1.9-1.48a.7.7 0 0 0 .16-.9l-1.8-3.1a.7.7 0 0 0-.85-.31l-2.24.9a7.6 7.6 0 0 0-1.44-.83l-.34-2.38a.7.7 0 0 0-.7-.6H9.05a.7.7 0 0 0-.7.6l-.34 2.38c-.51.21-.99.49-1.44.83l-2.24-.9a.7.7 0 0 0-.85.31l-1.8 3.1a.7.7 0 0 0 .16.9l1.9 1.48c-.09.53-.14 1.06-.14 1.66s.05 1.13.14 1.66l-1.9 1.48a.7.7 0 0 0-.16.9l1.8 3.1c.18.31.55.43.85.31l2.24-.9c.45.34.93.62 1.44.83l.34 2.38c.06.35.36.6.7.6h3.9c.34 0 .64-.25.7-.6l.34-2.38c.51-.21.99-.49 1.44-.83l2.24.9c.3.12.67 0 .85-.31l1.8-3.1a.7.7 0 0 0-.16-.9l-1.9-1.48c.09-.53.14-1.06.14-1.66Z"/>
+      </svg>
+    </button>
+
+    <p class="app-name">OneTap</p>
+
+    <button type="button" class="icon-btn" id="resetBtn" aria-label="Reset counter">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Middle: calm open space, no secondary counter here -->
+  <main class="stage" aria-hidden="false">
+    <p class="hint" id="tapHint">Tap the button to count</p>
+  </main>
+
+  <!-- Lower section: the single tap button -->
+  <section class="tap-zone">
+    <button type="button" class="tap-btn" id="tapBtn" aria-label="Tap to increase count" aria-live="off">
+      <span class="tap-btn__ring tap-btn__ring--outer" aria-hidden="true"></span>
+      <span class="tap-btn__ring tap-btn__ring--inner" aria-hidden="true"></span>
+      <span class="tap-btn__count" id="countDisplay">0</span>
+      <span class="ripple" id="ripple" aria-hidden="true"></span>
+    </button>
+    <p class="live-region sr-only" id="countAnnounce" aria-live="polite"></p>
+  </section>
+
+  <div class="bottom-space" aria-hidden="true"></div>
+</div>
+
+<!-- Settings sheet -->
+<div class="overlay" id="overlay" hidden></div>
+<div class="sheet" id="settingsSheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
+  <div class="sheet__handle" aria-hidden="true"></div>
+  <div class="sheet__header">
+    <h2 id="settingsTitle">Settings</h2>
+    <button type="button" class="icon-btn" id="closeSettingsBtn" aria-label="Close settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+    </button>
+  </div>
+
+  <div class="sheet__body">
+
+    <section class="settings-group" aria-labelledby="themeLabel">
+      <h3 id="themeLabel" class="settings-group__title">Appearance</h3>
+
+      <div class="setting-row">
+        <div class="setting-row__text">
+          <span class="setting-row__label">Theme</span>
+          <span class="setting-row__desc">Choose light, dark, or match your device</span>
+        </div>
+      </div>
+      <div class="segmented" role="radiogroup" aria-label="Theme">
+        <button type="button" class="segmented__opt" data-theme="light" role="radio" aria-checked="false">Light</button>
+        <button type="button" class="segmented__opt" data-theme="dark" role="radio" aria-checked="false">Dark</button>
+        <button type="button" class="segmented__opt" data-theme="system" role="radio" aria-checked="false">Auto</button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-row__text">
+          <span class="setting-row__label">Frosted glass</span>
+          <span class="setting-row__desc">Translucent, blurred surfaces</span>
+        </div>
+        <button type="button" class="toggle" id="glassToggle" role="switch" aria-checked="true" aria-label="Frosted glass effect">
+          <span class="toggle__knob"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="settings-group" aria-labelledby="feedbackLabel">
+      <h3 id="feedbackLabel" class="settings-group__title">Tap feedback</h3>
+
+      <div class="setting-row">
+        <div class="setting-row__text">
+          <span class="setting-row__label">Tap sound</span>
+          <span class="setting-row__desc">Play a soft click on each tap</span>
+        </div>
+        <button type="button" class="toggle" id="soundToggle" role="switch" aria-checked="false" aria-label="Tap sound">
+          <span class="toggle__knob"></span>
+        </button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-row__text">
+          <span class="setting-row__label">Vibration</span>
+          <span class="setting-row__desc">Gentle buzz on each tap, if supported</span>
+        </div>
+        <button type="button" class="toggle" id="hapticToggle" role="switch" aria-checked="false" aria-label="Vibration feedback">
+          <span class="toggle__knob"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="settings-group" aria-labelledby="displayLabel">
+      <h3 id="displayLabel" class="settings-group__title">Display</h3>
+
+      <div class="setting-row">
+        <div class="setting-row__text">
+          <span class="setting-row__label">Fullscreen</span>
+          <span class="setting-row__desc">Hide browser bars while using the app</span>
+        </div>
+        <button type="button" class="toggle" id="fullscreenToggle" role="switch" aria-checked="false" aria-label="Fullscreen mode">
+          <span class="toggle__knob"></span>
+        </button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-row__text">
+          <span class="setting-row__label">Keep screen on</span>
+          <span class="setting-row__desc">Prevent the screen from sleeping, if supported</span>
+        </div>
+        <button type="button" class="toggle" id="wakeLockToggle" role="switch" aria-checked="false" aria-label="Keep screen on">
+          <span class="toggle__knob"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="settings-group" aria-labelledby="dataLabel">
+      <h3 id="dataLabel" class="settings-group__title">Your count</h3>
+
+      <button type="button" class="list-btn" id="exportBtn">
+        <span>Back up count to a file</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <button type="button" class="list-btn" id="importBtn">
+        <span>Restore count from a file</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15V3m0 0L8 7m4-4 4 4M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <input type="file" id="importFile" accept="application/json" class="sr-only" />
+
+      <button type="button" class="list-btn list-btn--danger" id="resetFromSettingsBtn">
+        <span>Reset count to zero</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z" fill="currentColor"/></svg>
+      </button>
+
+      <p class="fine-print">Your count is saved on this device only. Clearing your browser or site data will remove it, so back it up if it matters to you.</p>
+    </section>
+
+    <section class="settings-group" aria-labelledby="aboutLabel">
+      <h3 id="aboutLabel" class="settings-group__title">About</h3>
+      <p class="fine-print">OneTap Counter works fully offline and never needs an account. You can install it on your home screen from your browser's menu for a full-screen, app-like experience.</p>
+    </section>
+  </div>
+</div>
+
+<!-- Confirmation dialog (reused for reset) -->
+<div class="confirm-overlay" id="confirmOverlay" hidden></div>
+<div class="confirm-dialog" id="confirmDialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmDesc" hidden>
+  <h2 id="confirmTitle">Reset count to zero?</h2>
+  <p id="confirmDesc">This cannot be undone. Your current count will be lost unless you back it up first.</p>
+  <div class="confirm-dialog__actions">
+    <button type="button" class="btn btn--ghost" id="confirmCancelBtn">Cancel</button>
+    <button type="button" class="btn btn--danger" id="confirmOkBtn">Reset</button>
+  </div>
+</div>
+
+<!-- Toast for export/import feedback -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="script.js"></script>
+</body>
+</html>

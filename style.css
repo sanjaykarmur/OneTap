@@ -1,0 +1,535 @@
+/* =========================================================
+   OneTap Counter — design tokens
+   Signature: the tap button is a glass "dial" with concentric
+   rings and a sonar-style ripple that pulses outward on tap —
+   echoing a gauge/tally instrument rather than a generic button.
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* --- Light palette: soft blue-grey, not cream --- */
+  --bg-0: #E7ECF3;
+  --bg-1: #DCE3ED;
+  --text-0: #142238;
+  --text-1: #4C5A73;
+  --accent: #2E6FA6;
+  --accent-strong: #1F4E7A;
+  --danger: #B3452D;
+  --danger-strong: #8F3521;
+  --success: #2E8B6F;
+
+  --glass-fill: rgba(255, 255, 255, 0.55);
+  --glass-fill-strong: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-shadow: rgba(30, 45, 70, 0.18);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+
+  --sheet-bg: rgba(255, 255, 255, 0.86);
+
+  --radius-lg: 32px;
+  --radius-md: 22px;
+  --radius-sm: 14px;
+
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 20px;
+  --space-4: 28px;
+  --space-5: 40px;
+
+  --dur-fast: 120ms;
+  --dur-med: 240ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --focus-ring: 0 0 0 3px var(--bg-0), 0 0 0 6px var(--accent);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-0: #0F1A2B;
+  --bg-1: #0A1420;
+  --text-0: #EAF2FF;
+  --text-1: #A9B8D0;
+  --accent: #62B6E8;
+  --accent-strong: #8ED0F5;
+  --danger: #E2694C;
+  --danger-strong: #F08668;
+  --success: #57C8A2;
+
+  --glass-fill: rgba(255, 255, 255, 0.07);
+  --glass-fill-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: rgba(0, 0, 0, 0.45);
+  --glass-highlight: rgba(255, 255, 255, 0.22);
+
+  --sheet-bg: rgba(16, 26, 43, 0.92);
+
+  --focus-ring: 0 0 0 3px var(--bg-0), 0 0 0 6px var(--accent-strong);
+}
+
+/* No-glass mode: flatten surfaces while keeping layout identical */
+[data-glass="off"] {
+  --glass-fill: var(--bg-1);
+  --glass-fill-strong: var(--bg-1);
+  --glass-border: transparent;
+  --glass-highlight: transparent;
+}
+[data-theme="dark"][data-glass="off"] {
+  --glass-fill: #16243A;
+  --glass-fill-strong: #16243A;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: radial-gradient(ellipse at 50% -10%, var(--bg-1), var(--bg-0) 65%);
+  color: var(--text-0);
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--dur-slow) var(--ease-out), color var(--dur-med) var(--ease-out);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -60px; left: 12px;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  z-index: 100;
+  transition: top var(--dur-fast);
+}
+.skip-link:focus { top: 12px; }
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+svg { width: 24px; height: 24px; fill: currentColor; }
+
+/* ---------------- Layout ---------------- */
+
+.app {
+  min-height: 100dvh;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  padding: max(env(safe-area-inset-top), 16px) max(env(safe-area-inset-right), 16px) max(env(safe-area-inset-bottom), 16px) max(env(safe-area-inset-left), 16px);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-1);
+}
+
+.app-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+
+.icon-btn {
+  width: 52px;
+  height: 52px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-0);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 4px 14px var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-med);
+}
+.icon-btn:hover { background: var(--glass-fill-strong); }
+.icon-btn:active { transform: scale(0.92); }
+
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-1);
+  font-size: clamp(15px, 3.6vw, 18px);
+  font-weight: 500;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.tap-zone {
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--space-4);
+}
+
+.bottom-space {
+  min-height: max(env(safe-area-inset-bottom), 24px);
+}
+
+/* ---------------- The tap button (signature element) ---------------- */
+
+.tap-btn {
+  position: relative;
+  width: min(72vw, 320px);
+  height: min(72vw, 320px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow:
+    0 18px 40px var(--glass-shadow),
+    0 2px 8px var(--glass-shadow),
+    inset 0 2px 1px var(--glass-highlight),
+    inset 0 -12px 24px rgba(0,0,0,0.05);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-med);
+  isolation: isolate;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.tap-btn::before {
+  /* soft gradient sheen for depth */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(155deg, var(--glass-highlight) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.tap-btn__ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--glass-border);
+  pointer-events: none;
+}
+.tap-btn__ring--outer { inset: 10%; }
+.tap-btn__ring--inner { inset: 20%; opacity: 0.7; }
+
+.tap-btn__count {
+  position: relative;
+  z-index: 2;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: clamp(2.6rem, 13vw, 4.2rem);
+  letter-spacing: -0.02em;
+  color: var(--text-0);
+  text-shadow: 0 1px 0 var(--glass-highlight);
+  transition: transform var(--dur-fast) var(--ease-out);
+  padding: 0 8px;
+  text-align: center;
+  line-height: 1;
+}
+
+.tap-btn:active { transform: scale(0.96); }
+.tap-btn:active .tap-btn__count { transform: scale(0.94); }
+
+.tap-btn.is-pressed .tap-btn__count { transform: scale(1.06); }
+
+.ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.ripple.animate {
+  animation: sonar 560ms var(--ease-out);
+}
+@keyframes sonar {
+  0%   { transform: scale(0.7); opacity: 0.55; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+@media (min-width: 700px) {
+  .tap-btn { width: min(40vw, 360px); height: min(40vw, 360px); }
+}
+
+/* ---------------- Settings sheet ---------------- */
+
+.overlay, .confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 12, 22, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 40;
+  opacity: 0;
+  transition: opacity var(--dur-med) var(--ease-out);
+}
+.overlay.show, .confirm-overlay.show { opacity: 1; }
+
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  max-height: min(88vh, 780px);
+  margin: 0 auto;
+  max-width: 560px;
+  background: var(--sheet-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -12px 40px var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform var(--dur-slow) var(--ease-out);
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+.sheet.show { transform: translateY(0); }
+
+.sheet__handle {
+  width: 44px; height: 5px;
+  border-radius: 3px;
+  background: var(--glass-border);
+  margin: 12px auto 4px;
+}
+
+.sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+}
+.sheet__header h2 { margin: 0; font-size: 22px; font-weight: 700; }
+
+.sheet__body {
+  overflow-y: auto;
+  padding: 0 var(--space-4) var(--space-5);
+}
+
+.settings-group { margin-top: var(--space-4); }
+.settings-group__title {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  min-height: 44px;
+}
+.setting-row__text { display: flex; flex-direction: column; gap: 2px; }
+.setting-row__label { font-size: 17px; font-weight: 600; }
+.setting-row__desc { font-size: 14px; color: var(--text-1); }
+
+.segmented {
+  display: flex;
+  gap: 6px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+}
+.segmented__opt {
+  flex: 1;
+  padding: 12px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-1);
+  text-align: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+  min-height: 44px;
+}
+.segmented__opt[aria-checked="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.toggle {
+  position: relative;
+  width: 56px;
+  height: 34px;
+  border-radius: 20px;
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--glass-border);
+  flex-shrink: 0;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.toggle__knob {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.toggle[aria-checked="true"] {
+  background: var(--accent);
+}
+.toggle[aria-checked="true"] .toggle__knob {
+  transform: translateX(22px);
+}
+
+.list-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px var(--space-3);
+  margin-top: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  font-size: 16px;
+  font-weight: 600;
+  min-height: 44px;
+  transition: background var(--dur-fast);
+}
+.list-btn:hover { background: var(--glass-fill-strong); }
+.list-btn svg { width: 20px; height: 20px; color: var(--text-1); }
+.list-btn--danger { color: var(--danger); }
+.list-btn--danger svg { color: var(--danger); }
+
+.fine-print {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-1);
+  margin: var(--space-2) 0 0;
+}
+
+/* ---------------- Confirm dialog ---------------- */
+
+.confirm-dialog {
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(0.94);
+  z-index: 60;
+  width: min(90vw, 400px);
+  background: var(--sheet-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px var(--glass-shadow);
+  padding: var(--space-4);
+  opacity: 0;
+  transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
+}
+.confirm-dialog.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.confirm-dialog h2 { margin: 0 0 10px; font-size: 20px; }
+.confirm-dialog p { margin: 0 0 var(--space-3); color: var(--text-1); font-size: 15px; line-height: 1.5; }
+.confirm-dialog__actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+
+.btn {
+  padding: 12px 22px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 16px;
+  min-height: 44px;
+}
+.btn--ghost {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  color: var(--text-0);
+}
+.btn--danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn--danger:hover { background: var(--danger-strong); }
+
+/* ---------------- Toast ---------------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(env(safe-area-inset-bottom), 20px);
+  transform: translateX(-50%) translateY(20px);
+  z-index: 70;
+  background: var(--sheet-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  color: var(--text-0);
+  padding: 14px 22px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 10px 30px var(--glass-shadow);
+  opacity: 0;
+  transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------------- Reduced motion ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------------- High contrast safety ---------------- */
+
+@media (prefers-contrast: more) {
+  :root { --glass-border: rgba(0,0,0,0.5); }
+  [data-theme="dark"] { --glass-border: rgba(255,255,255,0.5); }
+}
